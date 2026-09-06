@@ -169,6 +169,9 @@
             <div class="hr"></div>
             <div class="readout"><span class="label" data-i18n="a_titer_label">Titer</span><span class="value" id="a-titer">—</span></div>
             <div class="hr"></div>
+            <button id="a-ai-explain" class="stressbtn" style="background:var(--amber-dim);" data-i18n="ai_explain_btn">🤖 Explain this titration with AI</button>
+            <div id="a-ai-summary" style="display:none;font-size:12.5px;margin-top:8px;padding:10px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:8px;"></div>
+            <div class="hr"></div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               <button id="a-export-csv" class="stressbtn" style="flex:1;" data-i18n="a_export_curve">⬇ Export curve (CSV)</button>
               <button id="a-export-png" class="stressbtn" style="flex:1;" data-i18n="export_chart_png">⬇ Export chart (PNG)</button>
@@ -246,6 +249,9 @@
             <div class="readout big"><span class="label" data-i18n="t_q_label">q (heat exchanged)</span><span class="value" id="t-q">—</span></div>
             <div class="readout"><span class="label" data-i18n="t_dhm_label">ΔH molar</span><span class="value" id="t-dHm">—</span></div>
             <div class="readout"><span class="label" data-i18n="t_class_label">Classification</span><span class="value" id="t-class">—</span></div>
+            <div class="hr"></div>
+            <button id="t-ai-explain" class="stressbtn" style="background:var(--amber-dim);" data-i18n="ai_explain_btn_thermo">🤖 Explain this result with AI</button>
+            <div id="t-ai-summary" style="display:none;font-size:12.5px;margin-top:8px;padding:10px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:8px;"></div>
             <div class="hr"></div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               <button id="t-export-csv" class="stressbtn" style="flex:1;" data-i18n="t_export_diagram">⬇ Export results (CSV)</button>
@@ -378,6 +384,10 @@
                 <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:6px;" data-i18n="c_view3d_label">🧊 View in 3D</div>
                 <div id="c-view3d-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
               </div>
+              <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--paper-edge);">
+                <button id="c-ai-explain" class="stressbtn" style="background:var(--amber-dim);" data-i18n="ai_explain_btn_reaction">🤖 Explain this reaction with AI</button>
+                <div id="c-ai-summary" style="display:none;font-size:12.5px;margin-top:8px;padding:10px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:8px;"></div>
+              </div>
             </div>
             <div class="card">
               <div class="card-title" data-i18n="c_auto_kinetics">Auto-generated kinetics</div>
@@ -468,7 +478,7 @@
               <select id="cloud-ai-provider" class="reagent-select" style="padding:6px;">
                 <option value="openrouter">OpenRouter (Free models available)</option>
                 <option value="qwen">Qwen (Alibaba Cloud)</option>
-                <option value="mistral">Mastral AI</option>
+                <option value="mistral">Mistral AI</option>
               </select>
             </div>
             <div class="field" style="margin-bottom:8px;">
@@ -487,6 +497,32 @@
               individual free models rotate out. If you'd rather pin a specific model, check
               <a href="https://openrouter.ai/models?max_price=0" target="_blank" rel="noopener">currently free models →</a> and paste its slug above.
             </div>
+          </div>
+
+          <div style="margin-bottom:16px; padding:12px; background:var(--paper); border:1px solid var(--paper-edge); border-radius:8px;">
+            <div class="card-title" style="margin-bottom:8px;" data-i18n="rag_title">📚 Reference Library (grounds AI answers in your sources)</div>
+            <p style="font-size:11.5px;color:var(--ink-soft);margin-bottom:10px;" data-i18n="rag_desc">
+              Add excerpts from textbooks or other references (PDF, .txt, or pasted text). When you ask a question or
+              request an AI explanation anywhere in the app, relevant passages are automatically found by keyword
+              matching and included as context for the AI — so answers can cite and stay grounded in your sources
+              instead of relying purely on the model's own training. This is keyword-based retrieval, not true semantic
+              search, so exact terminology in your question helps it find the right passage.
+            </p>
+            <div class="field" style="margin-bottom:8px;">
+              <label style="font-size:11px;" data-i18n="rag_title_label">Source title (e.g. author/edition):</label>
+              <input id="rag-doc-title" type="text" class="formula-input" style="padding:6px;" placeholder="e.g. Atkins' Physical Chemistry, 11th ed.">
+            </div>
+            <div class="field" style="margin-bottom:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+              <input id="rag-file-input" type="file" accept=".txt,.md,.pdf" style="flex:1;min-width:160px;font-size:11px;">
+              <span style="font-size:11px;color:var(--ink-soft);" data-i18n="rag_or">or</span>
+              <button id="rag-paste-toggle" class="stressbtn" style="width:auto;padding:6px 12px;" data-i18n="rag_paste_btn">Paste text instead</button>
+            </div>
+            <div id="rag-paste-area" style="display:none;margin-bottom:8px;">
+              <textarea id="rag-paste-text" rows="5" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--paper-edge);background:var(--paper-raised);color:var(--ink);font-family:inherit;font-size:12px;" placeholder="Paste a chapter, section, or excerpt here..."></textarea>
+              <button id="rag-paste-add" class="stressbtn" style="margin-top:6px;" data-i18n="rag_add_pasted">+ Add pasted text</button>
+            </div>
+            <div id="rag-status" style="font-size:11px;font-weight:600;margin:6px 0;"></div>
+            <div id="rag-doc-list"></div>
           </div>
 
           <div class="hr"></div>

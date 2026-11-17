@@ -441,13 +441,24 @@ function setupCanvas(canvas){
   const ratio = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
   const w = rect.width || canvas.parentElement.clientWidth;
-  const h = canvas.height;
-  canvas.width = w*ratio; canvas.height = h*ratio;
+  // keep the logical (CSS) height fixed: read it once from the HTML height attribute, never from the
+  // already-scaled backing store, otherwise every redraw on a HiDPI screen multiplies the height
+  if(!canvas.dataset.logicalHeight) canvas.dataset.logicalHeight = canvas.getAttribute("height") || 220;
+  const h = +canvas.dataset.logicalHeight;
+  const bw = Math.round(w*ratio), bh = Math.round(h*ratio);
+  if(canvas.width !== bw) canvas.width = bw;
+  if(canvas.height !== bh) canvas.height = bh;
   canvas.style.height = h+"px";
   const ctx = canvas.getContext("2d");
   ctx.setTransform(ratio,0,0,ratio,0,0);
   return {ctx, w, h};
 }
+/* fix every chart canvas to its logical height from the start (before the first draw) */
+document.querySelectorAll("canvas[height]").forEach(c=>{
+  if(c.closest("#panel-3dview")) return;
+  c.dataset.logicalHeight = c.getAttribute("height");
+  c.style.height = c.dataset.logicalHeight+"px";
+});
 const PHOSPHOR="#2F9E52", PHOSPHOR_DIM="rgba(107,227,123,0.35)", AMBER="#C9791A", GRID="rgba(120,255,150,0.10)";
 const CHART_GRID_LINE="rgba(80,72,55,0.14)", CHART_AXIS="rgba(80,72,55,0.55)", CHART_TEXT="#544C3B";
 

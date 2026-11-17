@@ -465,3 +465,6 @@ footer{padding:14px 28px 22px;font-size:11px;color:var(--ink-soft);border-top:1p
 .qty-amount.bad{color:var(--red);}
 #c-reactants-list .reaction-row .formula-cell{flex:1 1 0;}
 #c-reactants-list .reaction-row select.phase-cell{flex:1.3 1 0;min-width:0;}
+/* charts keep a fixed height: no layout growth while simulations redraw */
+canvas{max-width:100%;}
+.chart-body canvas,#c-kinetics-chart{flex:none;}

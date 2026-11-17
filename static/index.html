@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reaction Bench — Chemistry Simulation Workbench</title>
+<link rel="stylesheet" href="static/css/style.css">
+<!-- Three.js for 3D animations -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+<header class="app-header">
+  <svg class="brand-mark" viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.6">
+    <circle cx="15" cy="15" r="12"/>
+    <circle cx="10" cy="12" r="2.2" fill="currentColor"/>
+    <circle cx="18" cy="10" r="1.6" fill="currentColor"/>
+    <circle cx="20" cy="18" r="2.6" fill="currentColor"/>
+    <circle cx="12" cy="20" r="1.8" fill="currentColor"/>
+    <line x1="10" y1="12" x2="18" y2="10" stroke-width="1"/>
+    <line x1="18" y1="10" x2="20" y2="18" stroke-width="1"/>
+    <line x1="20" y1="18" x2="12" y2="20" stroke-width="1"/>
+    <line x1="12" y1="20" x2="10" y2="12" stroke-width="1"/>
+  </svg>
+  <div>
+    <div class="brand-title">Reaction Bench</div>
+    <div class="eyebrow" data-i18n="app_eyebrow">animated workbench · 3D · AI-powered</div>
+  </div>
+  <div class="header-spacer"></div>
+  <button id="theme-toggle" class="theme-toggle" title="Toggle theme">🌙</button>
+</header>
+
+<div class="app-shell">
+  <aside id="sidebar" class="sidebar">
+    <nav id="tabs" class="sidebar-nav">
+      <div class="nav-group">
+        <button class="nav-link active" data-tab="overview"><span class="emoji">🏠</span><span data-i18n="tab_overview">Overview</span></button>
+      </div>
+      <div class="nav-group-label" data-i18n="nav_group_sims">Simulations</div>
+      <div class="nav-group">
+        <button class="nav-link" data-tab="acidbase"><span class="emoji">💧</span><span data-i18n="tab_acidbase">Acid–Base</span></button>
+        <button class="nav-link" data-tab="thermo"><span class="emoji">🔥</span><span data-i18n="tab_thermo">Thermochemistry</span></button>
+        <button class="nav-link" data-tab="custom"><span class="emoji">🧪</span><span data-i18n="tab_custom">Reaction Lab</span></button>
+        <button class="nav-link" data-tab="3dview"><span class="emoji">⚛️</span><span>3D Molecules</span></button>
+      </div>
+      <div class="nav-group-label" data-i18n="nav_group_tools">Tools</div>
+      <div class="nav-group">
+        <button class="nav-link" data-tab="reagents"><span class="emoji">⚛️</span><span data-i18n="tab_reagents">Reagents & Elements</span></button>
+        <button class="nav-link" data-tab="log"><span class="emoji">📒</span><span data-i18n="tab_log">Lab Log</span></button>
+        <button class="nav-link" data-tab="ai"><span class="emoji">🤖</span><span data-i18n="tab_ai">AI Assistant</span></button>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <select id="lang-select">
+        <option value="en">🇬🇧 English</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="pt">🇵🇹 Português</option>
+      </select>
+      <div class="note">ⓘ <span data-i18n="app_note">Physics-based teaching models — verify quantitatively before lab use.</span></div>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+  <main class="main-col">
+    <div class="topbar">
+      <button id="sidebar-toggle" class="hamburger">☰</button>
+      <div>
+        <div id="page-title" class="page-title">Overview</div>
+        <div id="page-desc" class="page-desc"></div>
+      </div>
+      <div class="topbar-actions" id="topbar-actions"><button id="a-run" class="topbar-run-btn" data-i18n="a_run_titration">▶ Run Titration</button><button id="t-solve" class="topbar-run-btn" data-i18n="t_run_simulation">▶ Run Simulation</button><button id="c-solve" class="topbar-run-btn" data-i18n="c_run_reaction">▶ Run Reaction</button></div>
+    </div>
+
+    <div class="stage">
+      <!-- Overview -->
+      <section id="panel-overview" class="panel active">
+        <div id="overview-grid" class="overview-grid"></div>
+      </section>
+
+      <!-- 3D Molecules (NEW) -->
+      <section id="panel-3dview" class="panel">
+        <div class="card">
+          <div class="card-title">3D Molecular Visualization</div>
+          <p style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">
+            Interactive 3D molecule viewer. Drag to rotate, scroll to zoom. Select a molecule to visualize.
+          </p>
+            <div class="field">
+            <label>Select molecule:</label>
+            <select id="molecule-select" class="reagent-select">
+              <option value="H2O">Water (H₂O)</option>
+              <option value="CO2">Carbon Dioxide (CO₂)</option>
+              <option value="CH4">Methane (CH₄)</option>
+              <option value="NH3">Ammonia (NH₃)</option>
+              <option value="C6H6">Benzene (C₆H₆)</option>
+              <option value="NaCl">Sodium Chloride (NaCl)</option>
+              <option value="C2H5OH">Ethanol (C₂H₅OH)</option>
+              <option value="HCOOH">Formic acid (HCOOH)</option>
+              <option value="C3H7OH">Propanol (C₃H₇OH)</option>
+              <option value="C2H4">Ethylene (C₂H₄)</option>
+              <option value="C2H2">Acetylene (C₂H₂)</option>
+              <option value="C2H6">Ethane (C₂H₆)</option>
+              <option value="CH3COOCH3">Methyl acetate (CH₃COOCH₃)</option>
+              <option value="CH3COOC2H5">Ethyl acetate (CH₃COOC₂H₅)</option>
+              <option value="CH3NH2">Methylamine (CH₃NH₂)</option>
+              <option value="C6H12O6">Glucose (C₆H₁₂O₆)</option>
+              <option value="HCl">Hydrochloric acid (HCl)</option>
+              <option value="NaOH">Sodium hydroxide (NaOH)</option>
+              <option value="MgCl2">Magnesium chloride (MgCl₂)</option>
+              <option value="CH3COONa">Sodium acetate (CH₃COONa)</option>
+            </select>
+          </div>
+          <div class="field" style="display:flex;gap:6px;align-items:flex-end;">
+            <div style="flex:1;">
+              <label style="font-size:11px;">Or type any formula:</label>
+              <input id="molecule-custom-formula" type="text" class="formula-input" placeholder="e.g. C3H7COOH">
+            </div>
+            <button id="molecule-custom-show" class="stressbtn" style="width:auto;padding:9px 14px;">Show</button>
+          </div>
+          <p id="molecule-3d-context" style="font-size:11px;color:var(--ink-soft);margin-top:6px;"></p>
+          <div id="three-container" style="width:100%;height:500px;border-radius:10px;overflow:hidden;background:#0a0f0a;position:relative;">
+            <div id="three-info" style="position:absolute;top:10px;left:10px;color:var(--phosphor);font-family:'IBM Plex Mono',monospace;font-size:11px;z-index:10;background:rgba(0,0,0,0.7);padding:8px 12px;border-radius:6px;">
+              Drag to rotate · Scroll to zoom
+            </div>
+          </div>
+          <div id="molecule-info" style="margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:12px;"></div>
+        </div>
+      </section>
+
+      <!-- Acid-Base -->
+      <section id="panel-acidbase" class="panel">
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title" data-i18n="a_titration_setup">Titration setup</div>
+            <div class="field">
+              <div class="row"><label data-i18n="a_acid_in_flask">Acid in flask</label></div>
+              <select id="a-acid-select" class="reagent-select">
+                <option value="custom" data-mode="weak" data-pka="4.76" data-i18n="a_opt_custom">Custom weak acid</option>
+                <option value="HCl" data-mode="strong" data-pka="-7">Hydrochloric acid — HCl</option>
+                <option value="HNO3" data-mode="strong" data-pka="-1.3">Nitric acid — HNO₃</option>
+                <option value="H2SO4" data-mode="strong" data-pka="-3">Sulfuric acid — H₂SO₄ (1st H⁺)</option>
+                <option value="CH3COOH" data-mode="weak" data-pka="4.76">Acetic acid — CH₃COOH</option>
+                <option value="HF" data-mode="weak" data-pka="3.17">Hydrofluoric acid — HF</option>
+                <option value="H3PO4" data-mode="weak" data-pka="2.15">Phosphoric acid — H₃PO₄ (1st H⁺)</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="row"><label data-i18n="a_base_in_burette">Base in burette</label></div>
+              <select id="a-base-select" class="reagent-select">
+                <option value="NaOH">Sodium hydroxide — NaOH</option>
+                <option value="KOH">Potassium hydroxide — KOH</option>
+                <option value="CaOH2">Calcium hydroxide — Ca(OH)₂</option>
+              </select>
+            </div>
+            <div class="pillgroup" id="a-mode">
+              <button data-v="strong" data-i18n="a_strong_strong">Strong/Strong</button>
+              <button data-v="weak" class="active" data-i18n="a_weak_strong">Weak acid/Strong base</button>
+            </div>
+            <div class="field"><div class="row"><label data-i18n="a_acid_conc">Acid conc. [HA]</label><span class="val" id="a-Ca-val">0.10 M</span></div><input id="a-Ca" type="range" min="0.01" max="1.0" step="0.01" value="0.10"></div>
+            <div class="field"><div class="row"><label data-i18n="a_acid_volume">Acid volume</label><span class="val" id="a-Va-val">25 mL</span></div><input id="a-Va" type="range" min="10" max="100" step="1" value="25"></div>
+            <div class="field"><div class="row"><label data-i18n="a_base_conc">Base conc. [OH⁻]</label><span class="val" id="a-Cb-val">0.10 M</span></div><input id="a-Cb" type="range" min="0.01" max="1.0" step="0.01" value="0.10"></div>
+            <div class="field" id="a-pKa-field"><div class="row"><label data-i18n="a_pka">pKa of acid</label><span class="val" id="a-pKa-val">4.76</span></div><input id="a-pKa" type="range" min="0" max="14" step="0.01" value="4.76"></div>
+            <div class="field"><div class="row"><label data-i18n="a_titrant_added">Titrant added</label><span class="val" id="a-Vb-val">0.0 mL</span></div><input id="a-Vb" type="range" min="0" max="100" step="0.1" value="0"></div>
+            <div class="readout"><span class="label" data-i18n="a_ph_now">pH now</span><span class="value" id="a-pH-now">—</span></div>
+            <div class="readout"><span class="label" data-i18n="a_equiv_vol">Equiv. Vol.</span><span class="value" id="a-veq">—</span></div>
+            <div class="readout"><span class="label" data-i18n="a_indicator_label">Indicator</span><span class="value" id="a-indicator">—</span></div>
+            <div id="a-endpoint-note" style="display:none;margin-top:10px;font-size:12px;color:var(--success-text);font-weight:600;"></div>
+            <div class="hr"></div>
+            <div class="readout"><span class="label" data-i18n="a_titer_label">Titer</span><span class="value" id="a-titer">—</span></div>
+            <div class="hr"></div>
+            <button id="a-ai-explain" class="stressbtn" style="background:var(--amber-dim);" data-i18n="ai_explain_btn">🤖 Explain this titration with AI</button>
+            <div id="a-ai-summary" style="display:none;font-size:12.5px;margin-top:8px;padding:10px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:8px;"></div>
+            <div class="hr"></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button id="a-export-csv" class="stressbtn" style="flex:1;" data-i18n="a_export_curve">⬇ Export curve (CSV)</button>
+              <button id="a-export-png" class="stressbtn" style="flex:1;" data-i18n="export_chart_png">⬇ Export chart (PNG)</button>
+            </div>
+            <button id="a-log" class="stressbtn" data-i18n="log_this_experiment">📌 Log this experiment</button>
+          </div>
+          <div>
+            <div class="bench">
+              <div class="corners"><span></span><span></span><span></span><span></span></div>
+              <div class="surface-label" data-i18n="a_surface_rig">titration rig</div>
+              <div class="surface-body">
+                <div class="apparatus-row">
+                  <svg class="glass" width="220" height="320" viewBox="0 0 220 320">
+                    <defs>
+                      <linearGradient id="buretteGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0" stop-color="rgba(255,255,255,0.15)"/>
+                        <stop offset="0.5" stop-color="rgba(255,255,255,0.05)"/>
+                        <stop offset="1" stop-color="rgba(255,255,255,0.15)"/>
+                      </linearGradient>
+                      <linearGradient id="flaskGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0" stop-color="rgba(255,255,255,0.18)"/>
+                        <stop offset="0.5" stop-color="rgba(255,255,255,0.04)"/>
+                        <stop offset="1" stop-color="rgba(255,255,255,0.18)"/>
+                      </linearGradient>
+                      <clipPath id="flaskClip">
+                        <path d="M 81 190 L 81 220 L 43 290 Q 43 310 93 310 Q 143 310 143 290 L 105 220 L 105 190 Z"/>
+                      </clipPath>
+                    </defs>
+
+                    <!-- retort stand: base, pole, and clamp holding the burette -->
+                    <rect x="2" y="298" width="64" height="10" rx="2" fill="#7a7a7a"/>
+                    <rect x="15" y="12" width="6" height="296" fill="#8f8f8f" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+                    <rect x="21" y="34" width="70" height="7" rx="2" fill="#8f8f8f"/>
+                    <rect x="85" y="28" width="16" height="19" rx="2" fill="#6b6b6b"/>
+
+                    <!-- burette, clamped vertically -->
+                    <rect x="85" y="15" width="16" height="130" fill="url(#buretteGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
+                    <rect id="a-burette-liquid" x="86" y="40" width="14" height="90" fill="#63C7D6" opacity="0.75"/>
+                    <path d="M 87 145 L 99 145 L 93 158 Z" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.4)" stroke-width="0.6"/>
+                    <circle id="a-drop" class="drop" cx="93" cy="159" r="2.5" fill="#63C7D6"/>
+
+                    <!-- conical (Erlenmeyer) flask directly beneath the burette tip -->
+                    <path d="M 81 190 L 81 220 L 43 290 Q 43 310 93 310 Q 143 310 143 290 L 105 220 L 105 190 Z" fill="url(#flaskGrad)" stroke="rgba(255,255,255,0.45)" stroke-width="1.4"/>
+                    <rect id="a-flask-liquid" x="43" y="280" width="100" height="30" fill="#D9695F" opacity="0.75" class="liquid" clip-path="url(#flaskClip)"/>
+                    <rect x="79" y="180" width="28" height="10" fill="rgba(255,255,255,0.25)"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class="screen">
+              <div class="corners"><span></span><span></span><span></span><span></span></div>
+              <div class="surface-label" data-i18n="a_surface_curve">titration curve · pH vs. volume</div>
+              <div class="chart-body"><canvas id="a-chart" height="220"></canvas></div>
+            </div>
+            <div style="margin-top:10px;font-size:11px;color:var(--ink-soft);">
+              <span data-i18n="a_reaction_title">Neutralization reaction</span> — <span id="a-formula">—</span>
+              <br><span id="a-equation" style="font-family:'IBM Plex Mono',monospace;font-size:12px;"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thermochemistry -->
+      <section id="panel-thermo" class="panel">
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title" data-i18n="t_calorimetry">Calorimetry</div>
+            <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;" data-i18n="t_hint">Pick the substance(s) you want to heat or cool, set a mass for each, choose the starting and target temperature, then run. Specific heat is looked up automatically where known.</p>
+            <div id="t-substances-list"></div>
+            <button id="t-add-substance" class="stressbtn" data-i18n="t_add_substance">+ Add substance</button>
+            <div class="hr"></div>
+            <div class="card-title" data-i18n="c_conditions">Conditions</div>
+            <div class="field"><div class="row"><label data-i18n="t_initial_temp">Initial temperature</label><span class="val" id="t-Ti-val">25 °C</span></div><input id="t-Ti" type="range" min="-20" max="2000" step="1" value="25"></div>
+            <div class="field"><div class="row"><label data-i18n="t_final_temp">Final temperature</label><span class="val" id="t-Tf-val">80 °C</span></div><input id="t-Tf" type="range" min="-20" max="2000" step="1" value="80"></div>
+            <div class="readout big"><span class="label" data-i18n="t_q_label">q (heat exchanged)</span><span class="value" id="t-q">—</span></div>
+            <div class="readout"><span class="label" data-i18n="t_dhm_label">ΔH molar</span><span class="value" id="t-dHm">—</span></div>
+            <div class="readout"><span class="label" data-i18n="t_class_label">Classification</span><span class="value" id="t-class">—</span></div>
+            <div class="hr"></div>
+            <button id="t-ai-explain" class="stressbtn" style="background:var(--amber-dim);" data-i18n="ai_explain_btn_thermo">🤖 Explain this result with AI</button>
+            <div id="t-ai-summary" style="display:none;font-size:12.5px;margin-top:8px;padding:10px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:8px;"></div>
+            <div class="hr"></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button id="t-export-csv" class="stressbtn" style="flex:1;" data-i18n="t_export_diagram">⬇ Export results (CSV)</button>
+              <button id="t-export-png" class="stressbtn" style="flex:1;" data-i18n="export_chart_png">⬇ Export chart (PNG)</button>
+            </div>
+            <button id="t-log" class="stressbtn" data-i18n="log_this_experiment">📌 Log this experiment</button>
+          </div>
+          <div>
+            <div class="bench">
+              <div class="corners"><span></span><span></span><span></span><span></span></div>
+              <div class="surface-label" data-i18n="t_surface_flask">reaction flask</div>
+              <div class="surface-body">
+                <div class="apparatus-row">
+                  <svg class="glass" width="200" height="290" viewBox="0 0 200 290">
+                    <defs>
+                      <linearGradient id="thermoFlask" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0" stop-color="rgba(255,255,255,0.18)"/>
+                        <stop offset="0.5" stop-color="rgba(255,255,255,0.04)"/>
+                        <stop offset="1" stop-color="rgba(255,255,255,0.18)"/>
+                      </linearGradient>
+                      <clipPath id="thermoFlaskClip">
+                        <path d="M 80 20 L 80 70 L 45 160 Q 45 205 100 205 Q 155 205 155 160 L 120 70 L 120 20 Z"/>
+                      </clipPath>
+                    </defs>
+
+                    <!-- Bunsen burner, nestled under the tripod ring -->
+                    <g id="t-flame" class="flame" style="display:none;">
+                      <ellipse cx="100" cy="207" rx="16" ry="7" fill="#E8A33D" opacity="0.55"/>
+                      <path d="M 100 205 Q 90 185 100 165 Q 110 185 100 205" fill="#E8A33D"/>
+                      <path d="M 100 200 Q 95 187 100 172 Q 105 187 100 200" fill="#F4D35E"/>
+                    </g>
+                    <rect x="93" y="208" width="14" height="34" fill="#5a5a5a"/>
+                    <path d="M 88 242 L 112 242 L 118 254 L 82 254 Z" fill="#4a4a4a"/>
+
+                    <!-- tripod stand: ring resting the flask, two angled legs -->
+                    <line x1="60" y1="207" x2="30" y2="278" stroke="#8f8f8f" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="140" y1="207" x2="170" y2="278" stroke="#8f8f8f" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="100" y1="207" x2="100" y2="278" stroke="#8f8f8f" stroke-width="4" stroke-linecap="round" opacity="0.55"/>
+                    <ellipse cx="100" cy="205" rx="47" ry="7" fill="none" stroke="#a8a8a8" stroke-width="4"/>
+
+                    <!-- flask, resting on the tripod ring -->
+                    <path d="M 80 20 L 80 70 L 45 160 Q 45 205 100 205 Q 155 205 155 160 L 120 70 L 120 20 Z" fill="url(#thermoFlask)" stroke="rgba(255,255,255,0.45)" stroke-width="1.4"/>
+                    <rect id="t-flask-liquid" x="45" y="140" width="110" height="65" fill="#D9695F" opacity="0.65" clip-path="url(#thermoFlaskClip)"/>
+
+                    <!-- thermometer dipped into the flask through the neck -->
+                    <rect x="97" y="2" width="6" height="150" rx="3" fill="rgba(255,255,255,0.22)" stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+                    <circle cx="100" cy="155" r="9" fill="rgba(255,255,255,0.22)" stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+                    <rect id="t-mercury" x="98.5" y="80" width="3" height="70" fill="#D9695F"/>
+                    <circle cx="100" cy="155" r="6" fill="#D9695F"/>
+
+                    <g id="t-ice" class="frost" style="display:none;">
+                      <text x="140" y="230" text-anchor="middle" font-size="22" fill="#63C7D6">❄</text>
+                    </g>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class="screen">
+              <div class="corners"><span></span><span></span><span></span><span></span></div>
+              <div class="surface-label" data-i18n="t_surface_diagram">temperature profile</div>
+              <div class="chart-body"><canvas id="t-chart" height="220"></canvas></div>
+            </div>
+            <div style="margin-top:10px;font-size:12px;">
+              <div style="font-weight:600;margin-bottom:4px;" id="t-formula-suffix">—</div>
+              <div id="t-equation" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);"></div>
+              <div class="hr"></div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:6px;" data-i18n="t_breakdown_title">Per-substance breakdown</div>
+              <table id="t-results-table" style="width:100%;font-size:11px;border-collapse:collapse;"></table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Custom Reaction -->
+      <section id="panel-custom" class="panel">
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title" data-i18n="c_reactants">Reactants</div>
+            <div id="c-reactants-list"></div>
+            <button id="c-add-reactant" class="stressbtn" data-i18n="c_add_reactant">+ Add reactant</button>
+            <div class="hr"></div>
+            <div class="card-title" data-i18n="c_conditions">Conditions</div>
+            <div class="field"><div class="row"><label data-i18n="c_temperature">Temperature</label><span class="val" id="c-temp-val">25 °C</span></div><input id="c-temp" type="range" min="-20" max="2000" step="5" value="25"></div>
+            <div class="field"><div class="row"><label data-i18n="c_sim_time">Simulation time</label><span class="val" id="c-time-val">60 s</span></div><input id="c-time" type="range" min="0" max="86400" step="10" value="60"></div>
+            <div class="card-title" data-i18n="c_predicted_products_title">Predicted products</div>
+            <div id="c-predict-note" style="font-size:11px;color:var(--ink-soft);margin-bottom:6px;"></div>
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+              <button id="c-predict" class="stressbtn" style="flex:1;" data-i18n="c_predict_btn">🔮 Predict products</button>
+              <button id="c-ai-predict" class="stressbtn" style="flex:1;background:var(--amber-dim);" data-i18n="c_ai_predict_btn">🤖 Ask AI</button>
+            </div>
+            <div id="c-products-list"></div>
+            <div class="hr"></div>
+            <div id="c-error" style="display:none;color:var(--red);font-size:12px;margin-top:8px;"></div>
+            <div id="c-equation" style="font-family:'IBM Plex Mono',monospace;font-size:13px;margin-top:10px;font-weight:600;"></div>
+            <div class="hr"></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button id="c-chain" class="stressbtn" style="flex:1;" data-i18n="c_chain_btn">⛓ Chain reaction</button>
+              <button id="c-export-csv" class="stressbtn" style="flex:1;" data-i18n="c_export_csv">⬇ Export (CSV)</button>
+            </div>
+            <button id="c-log" class="stressbtn" data-i18n="log_this_experiment">📌 Log this experiment</button>
+          </div>
+          <div>
+            <div class="bench">
+              <div class="corners"><span></span><span></span><span></span><span></span></div>
+              <div class="surface-label" data-i18n="c_vessel_label">reaction vessel</div>
+              <div class="surface-body">
+                <div class="apparatus-row" id="c-bubble-host" style="position:relative;">
+                  <svg class="glass" width="150" height="180" viewBox="0 0 150 180">
+                    <defs>
+                      <clipPath id="beakerClip">
+                        <path d="M 30 10 L 30 140 Q 30 155 45 155 L 105 155 Q 120 155 120 140 L 120 10 Z"/>
+                      </clipPath>
+                    </defs>
+                    <path d="M 30 10 L 30 140 Q 30 155 45 155 L 105 155 Q 120 155 120 140 L 120 10" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.6"/>
+                    <line x1="24" y1="10" x2="126" y2="10" stroke="rgba(255,255,255,0.45)" stroke-width="1.6"/>
+                    <rect id="c-vessel-liquid" x="30" y="90" width="90" height="65" fill="#63C7D6" opacity="0.7" clip-path="url(#beakerClip)"/>
+                    <line x1="105" y1="30" x2="112" y2="30" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                    <line x1="105" y1="60" x2="112" y2="60" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                    <line x1="105" y1="90" x2="112" y2="90" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                    <line x1="105" y1="120" x2="112" y2="120" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title" data-i18n="c_results">Stoichiometry results</div>
+              <div id="c-mass-balance" style="font-size:11px;color:var(--ink-soft);margin-bottom:8px;"></div>
+              <table id="c-results-table" style="width:100%;font-size:11px;border-collapse:collapse;"></table>
+              <div id="c-view3d-section" style="display:none;margin-top:12px;padding-top:10px;border-top:1px dashed var(--paper-edge);">
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:6px;" data-i18n="c_view3d_label">🧊 View in 3D</div>
+                <div id="c-view3d-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+              </div>
+              <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--paper-edge);">
+                <button id="c-ai-explain" class="stressbtn" style="background:var(--amber-dim);" data-i18n="ai_explain_btn_reaction">🤖 Explain this reaction with AI</button>
+                <div id="c-ai-summary" style="display:none;font-size:12.5px;margin-top:8px;padding:10px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:8px;"></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title" data-i18n="c_auto_kinetics">Auto-generated kinetics</div>
+              <div id="c-kinetics-summary" style="font-size:11px;color:var(--ink-soft);margin-bottom:8px;"></div>
+              <canvas id="c-kinetics-chart" height="180"></canvas>
+            </div>
+            <div class="card">
+              <div class="card-title" data-i18n="c_auto_equilibrium">Auto-generated equilibrium</div>
+              <div id="c-equilibrium-summary" style="font-size:12px;"></div>
+            </div>
+            <div class="note" style="margin-top:8px;">ⓘ <span data-i18n="c_dynamics_disclaimer">Kinetics and equilibrium panels are educational estimates based on reaction type and temperature — not measured rate constants or equilibrium constants for this specific reaction.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reagents -->
+      <section id="panel-reagents" class="panel">
+        <div class="card">
+          <div class="card-title" data-i18n="r_periodic_table">Periodic table — click an element to add it to the formula builder</div>
+          <div id="ptable" class="ptable"></div>
+          <div id="ptable-legend" class="legend"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" data-i18n="r_formula_builder">Formula builder</div>
+          <input id="formula-input" class="formula-input" placeholder="e.g. NaOH, H2SO4, Ca(OH)2" data-i18n-placeholder="r_formula_placeholder">
+          <!-- FIXED: Added missing formula-clear button that app.js expects -->
+          <button id="formula-clear" class="stressbtn" style="margin-top:6px;" data-i18n="r_clear">Clear</button>
+          <div id="formula-breakdown" style="margin-top:8px;"></div>
+          <div id="formula-suggestions" style="display:none;margin-top:10px;"></div>
+          <div class="readout big" style="margin-top:10px;"><span class="label" data-i18n="r_molar_mass">Molar mass</span><span class="value" id="formula-mm">—</span></div>
+          <div class="hr"></div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input id="custom-reagent-name" class="formula-input" style="flex:1;" placeholder="Optional name" data-i18n-placeholder="r_custom_name_placeholder">
+            <button id="add-to-bank" class="stressbtn" style="flex:0 0 auto;" data-i18n="r_add_to_bank">➕ Add to bank</button>
+          </div>
+          <div id="add-to-bank-msg" style="display:none;font-size:11px;margin-top:6px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" data-i18n="r_prepare_solution">Prepare a solution</div>
+          <div class="field"><div class="row"><label data-i18n="r_target_molarity">Target molarity</label><span class="val" id="prep-M-val">0.10 M</span></div><input id="prep-M" type="range" min="0.001" max="2.0" step="0.001" value="0.10"></div>
+          <div class="field"><div class="row"><label data-i18n="r_target_volume">Target volume</label><span class="val" id="prep-V-val">250 mL</span></div><input id="prep-V" type="range" min="50" max="2000" step="10" value="250"></div>
+          <div class="readout big"><span class="label" data-i18n="r_mass_to_weigh">Mass to weigh out</span><span class="value" id="prep-mass">—</span></div>
+          <div class="note" style="margin-top:6px;">ℹ <span data-i18n="r_dissolve_note">Dissolve this mass of the selected compound in water and dilute to the target volume in a volumetric flask.</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title" data-i18n="r_common_reagents">Common laboratory reagents</div>
+          <div id="reagent-chips" class="chips"></div>
+        </div>
+        <datalist id="known-formulas"></datalist>
+      </section>
+
+      <!-- Lab Log -->
+      <section id="panel-log" class="panel">
+        <div class="card">
+          <div class="card-title"><span data-i18n="log_title_pre">Experiment log (</span><span id="log-count">0</span><span data-i18n="log_title_post"> saved) — stored locally in this browser</span></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+            <button id="log-export-csv" class="stressbtn" style="flex:1;" data-i18n="log_export_csv">⬇ Export all (CSV)</button>
+            <button id="log-export-json" class="stressbtn" style="flex:1;" data-i18n="log_export_json">⬇ Export all (JSON)</button>
+            <button id="log-clear-all" class="stressbtn" style="flex:0 0 auto;color:var(--red);" data-i18n="log_clear_all">clear all</button>
+          </div>
+          <table style="width:100%;font-size:12px;border-collapse:collapse;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--paper-edge);">
+                <th style="text-align:left;padding:6px 8px;color:var(--ink-soft);text-transform:uppercase;font-size:10px;letter-spacing:.06em;" data-i18n="log_th_time">Time</th>
+                <th style="text-align:left;padding:6px 8px;color:var(--ink-soft);text-transform:uppercase;font-size:10px;letter-spacing:.06em;" data-i18n="log_th_module">Module</th>
+                <th style="text-align:left;padding:6px 8px;color:var(--ink-soft);text-transform:uppercase;font-size:10px;letter-spacing:.06em;" data-i18n="log_th_inputs">Inputs</th>
+                <th style="text-align:left;padding:6px 8px;color:var(--ink-soft);text-transform:uppercase;font-size:10px;letter-spacing:.06em;" data-i18n="log_th_results">Results</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="log-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+            <!-- AI Assistant (Cloud API) -->
+      <section id="panel-ai" class="panel">
+        <div class="card">
+          <div class="card-title" data-i18n="ai_title">Lab Assistant — Cloud AI</div>
+          <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">
+            Powered by cloud AI APIs. No local model download required. Configure your API key below.
+          </p>
+          
+          <div style="margin-bottom:16px; padding:12px; background:var(--paper); border:1px solid var(--paper-edge); border-radius:8px;">
+            <div class="card-title" style="margin-bottom:8px;">Cloud AI Configuration</div>
+            <div class="field" style="margin-bottom:8px;">
+              <label style="font-size:11px;">Provider:</label>
+              <select id="cloud-ai-provider" class="reagent-select" style="padding:6px;">
+                <option value="openrouter">OpenRouter (Free models available)</option>
+                <option value="qwen">Qwen (Alibaba Cloud)</option>
+                <option value="mistral">Mistral AI</option>
+              </select>
+            </div>
+            <div class="field" style="margin-bottom:8px;">
+              <label style="font-size:11px;">API Key:</label>
+              <input id="cloud-ai-key" type="password" class="formula-input" style="padding:6px;" placeholder="Enter your API key">
+            </div>
+            <div class="field" style="margin-bottom:8px;">
+              <label style="font-size:11px;">Model (optional override):</label>
+              <input id="cloud-ai-model" type="text" class="formula-input" style="padding:6px;" placeholder="Leave blank for auto (openrouter/free)">
+            </div>
+            <div id="cloud-ai-key-status" style="font-size:11px;font-weight:600;margin-bottom:8px;"></div>
+            <div style="font-size:10px; color:var(--ink-soft);">
+              ⓘ Your API key is stored only in your browser, never sent anywhere except the provider you pick above.
+              Don't have one? <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">Get a free OpenRouter key →</a>
+              By default this uses OpenRouter's own auto-router (<code>openrouter/free</code>), which keeps working even as
+              individual free models rotate out. If you'd rather pin a specific model, check
+              <a href="https://openrouter.ai/models?max_price=0" target="_blank" rel="noopener">currently free models →</a> and paste its slug above.
+            </div>
+          </div>
+
+          <div style="margin-bottom:16px; padding:12px; background:var(--paper); border:1px solid var(--paper-edge); border-radius:8px;">
+            <div class="card-title" style="margin-bottom:8px;" data-i18n="rag_title">📚 Reference Library (grounds AI answers in your sources)</div>
+            <p style="font-size:11.5px;color:var(--ink-soft);margin-bottom:10px;" data-i18n="rag_desc">
+              Add excerpts from textbooks or other references (PDF, .txt, or pasted text). When you ask a question or
+              request an AI explanation anywhere in the app, relevant passages are automatically found by keyword
+              matching and included as context for the AI — so answers can cite and stay grounded in your sources
+              instead of relying purely on the model's own training. This is keyword-based retrieval, not true semantic
+              search, so exact terminology in your question helps it find the right passage.
+            </p>
+            <div class="field" style="margin-bottom:8px;">
+              <label style="font-size:11px;" data-i18n="rag_title_label">Source title (e.g. author/edition):</label>
+              <input id="rag-doc-title" type="text" class="formula-input" style="padding:6px;" placeholder="e.g. Atkins' Physical Chemistry, 11th ed.">
+            </div>
+            <div class="field" style="margin-bottom:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+              <input id="rag-file-input" type="file" accept=".txt,.md,.pdf" style="flex:1;min-width:160px;font-size:11px;">
+              <span style="font-size:11px;color:var(--ink-soft);" data-i18n="rag_or">or</span>
+              <button id="rag-paste-toggle" class="stressbtn" style="width:auto;padding:6px 12px;" data-i18n="rag_paste_btn">Paste text instead</button>
+            </div>
+            <div id="rag-paste-area" style="display:none;margin-bottom:8px;">
+              <textarea id="rag-paste-text" rows="5" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--paper-edge);background:var(--paper-raised);color:var(--ink);font-family:inherit;font-size:12px;" placeholder="Paste a chapter, section, or excerpt here..."></textarea>
+              <button id="rag-paste-add" class="stressbtn" style="margin-top:6px;" data-i18n="rag_add_pasted">+ Add pasted text</button>
+            </div>
+            <div id="rag-status" style="font-size:11px;font-weight:600;margin:6px 0;"></div>
+            <div id="rag-doc-list"></div>
+          </div>
+
+          <div class="hr"></div>
+          <div id="ai-suggestions" class="chat-suggestions"></div>
+          <div id="ai-log" class="chat-log"></div>
+          <div class="chat-input-row">
+            <input id="ai-input" type="text" placeholder="Ask a chemistry question..." data-i18n-placeholder="ai_input_placeholder">
+            <button id="ai-send" data-i18n="ai_send">Send</button>
+          </div>
+        </div>
+      </section>
+      </div>
+
+    <footer>
+      <span data-i18n="footer_text">Reaction Bench — an educational pre-lab intuition tool. Confirm quantitative results against primary literature before relying on them experimentally.</span>
+    </footer>
+  </main>
+</div>
+
+<div id="toast-host" class="toast-host"></div>
+
+<script src="static/js/app.js"></script>
+</body>
+</html>

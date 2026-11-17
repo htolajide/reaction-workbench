@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reaction Bench — Chemistry Simulation Workbench</title>
-<link rel="stylesheet" href="static/css/style.css">
-<!-- Three.js for 3D animations -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemistry Workbench Pro</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/darktheme.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 <body>
 <header class="app-header">
@@ -40,6 +41,7 @@
         <button class="nav-link" data-tab="acidbase"><span class="emoji">💧</span><span data-i18n="tab_acidbase">Acid–Base</span></button>
         <button class="nav-link" data-tab="thermo"><span class="emoji">🔥</span><span data-i18n="tab_thermo">Thermochemistry</span></button>
         <button class="nav-link" data-tab="custom"><span class="emoji">🧪</span><span data-i18n="tab_custom">Reaction Lab</span></button>
+        <button class="nav-link" data-tab="conjugation"><span class="emoji">🔗</span><span data-i18n="tab_conjugation">Conjugation</span></button>
         <button class="nav-link" data-tab="3dview"><span class="emoji">⚛️</span><span>3D Molecules</span></button>
       </div>
       <div class="nav-group-label" data-i18n="nav_group_tools">Tools</div>
@@ -70,7 +72,7 @@
         <div id="page-title" class="page-title">Overview</div>
         <div id="page-desc" class="page-desc"></div>
       </div>
-      <div class="topbar-actions" id="topbar-actions"><button id="a-run" class="topbar-run-btn" data-i18n="a_run_titration">▶ Run Titration</button><button id="t-solve" class="topbar-run-btn" data-i18n="t_run_simulation">▶ Run Simulation</button><button id="c-solve" class="topbar-run-btn" data-i18n="c_run_reaction">▶ Run Reaction</button></div>
+      <div class="topbar-actions" id="topbar-actions"><button id="a-run" class="topbar-run-btn" data-i18n="a_run_titration">▶ Run Titration</button><button id="t-solve" class="topbar-run-btn" data-i18n="t_run_simulation">▶ Run Simulation</button><button id="c-solve" class="topbar-run-btn" data-i18n="c_run_reaction">▶ Run Reaction</button><button id="cj-run" class="topbar-run-btn" data-i18n="cj_run">▶ Run Conjugation</button></div>
     </div>
 
     <div class="stage">
@@ -160,6 +162,7 @@
             <div class="field"><div class="row"><label data-i18n="a_acid_conc">Acid conc. [HA]</label><span class="val" id="a-Ca-val">0.10 M</span></div><input id="a-Ca" type="range" min="0.01" max="1.0" step="0.01" value="0.10"></div>
             <div class="field"><div class="row"><label data-i18n="a_acid_volume">Acid volume</label><span class="val" id="a-Va-val">25 mL</span></div><input id="a-Va" type="range" min="10" max="100" step="1" value="25"></div>
             <div class="field"><div class="row"><label data-i18n="a_base_conc">Base conc. [OH⁻]</label><span class="val" id="a-Cb-val">0.10 M</span></div><input id="a-Cb" type="range" min="0.01" max="1.0" step="0.01" value="0.10"></div>
+            <div class="field"><div class="row"><label data-i18n="a_rate">Titrant delivery rate</label><span class="val" id="a-rate-val">5.0 mL/min</span></div><input id="a-rate" type="range" min="0.5" max="50" step="0.5" value="5"></div>
             <div class="field" id="a-pKa-field"><div class="row"><label data-i18n="a_pka">pKa of acid</label><span class="val" id="a-pKa-val">4.76</span></div><input id="a-pKa" type="range" min="0" max="14" step="0.01" value="4.76"></div>
             <div class="field"><div class="row"><label data-i18n="a_titrant_added">Titrant added</label><span class="val" id="a-Vb-val">0.0 mL</span></div><input id="a-Vb" type="range" min="0" max="100" step="0.1" value="0"></div>
             <div class="readout"><span class="label" data-i18n="a_ph_now">pH now</span><span class="value" id="a-pH-now">—</span></div>
@@ -168,9 +171,6 @@
             <div id="a-endpoint-note" style="display:none;margin-top:10px;font-size:12px;color:var(--success-text);font-weight:600;"></div>
             <div class="hr"></div>
             <div class="readout"><span class="label" data-i18n="a_titer_label">Titer</span><span class="value" id="a-titer">—</span></div>
-            <div class="hr"></div>
-            <button id="a-ai-explain" class="stressbtn" style="background:var(--amber-dim);" data-i18n="ai_explain_btn">🤖 Explain this titration with AI</button>
-            <div id="a-ai-summary" style="display:none;font-size:12.5px;margin-top:8px;padding:10px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:8px;"></div>
             <div class="hr"></div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               <button id="a-export-csv" class="stressbtn" style="flex:1;" data-i18n="a_export_curve">⬇ Export curve (CSV)</button>
@@ -230,6 +230,7 @@
               <span data-i18n="a_reaction_title">Neutralization reaction</span> — <span id="a-formula">—</span>
               <br><span id="a-equation" style="font-family:'IBM Plex Mono',monospace;font-size:12px;"></span>
             </div>
+            <div id="a-report" class="lab-report"></div>
           </div>
         </div>
       </section>
@@ -246,12 +247,27 @@
             <div class="card-title" data-i18n="c_conditions">Conditions</div>
             <div class="field"><div class="row"><label data-i18n="t_initial_temp">Initial temperature</label><span class="val" id="t-Ti-val">25 °C</span></div><input id="t-Ti" type="range" min="-20" max="2000" step="1" value="25"></div>
             <div class="field"><div class="row"><label data-i18n="t_final_temp">Final temperature</label><span class="val" id="t-Tf-val">80 °C</span></div><input id="t-Tf" type="range" min="-20" max="2000" step="1" value="80"></div>
+            <div class="field"><div class="row"><label data-i18n="t_power">Heating / cooling power</label><span class="val" id="t-power-val">250 W</span></div><input id="t-power" type="range" min="5" max="5000" step="5" value="250"></div>
+            <div class="field"><div class="row"><label data-i18n="t_vessel">Vessel</label></div>
+              <select id="t-vessel" class="reagent-select">
+                <option value="beaker100" data-i18n="v_beaker100">100 mL borosilicate beaker</option>
+                <option value="beaker250" selected data-i18n="v_beaker250">250 mL borosilicate beaker</option>
+                <option value="beaker600" data-i18n="v_beaker600">600 mL borosilicate beaker</option>
+                <option value="rbf500" data-i18n="v_rbf500">500 mL round-bottom flask</option>
+                <option value="coffee" data-i18n="v_coffee">Coffee-cup calorimeter (polystyrene)</option>
+                <option value="dewar" data-i18n="v_dewar">Dewar flask calorimeter</option>
+                <option value="crucible" data-i18n="v_crucible">Porcelain crucible</option>
+              </select></div>
+            <div class="field"><div class="row"><label data-i18n="t_source">Heat source</label></div>
+              <select id="t-source" class="reagent-select">
+                <option value="bunsen" data-i18n="s_bunsen">Bunsen burner (≈35 % transferred)</option>
+                <option value="hotplate" selected data-i18n="s_hotplate">Hot plate (≈60 %)</option>
+                <option value="mantle" data-i18n="s_mantle">Heating mantle (≈80 %)</option>
+                <option value="immersion" data-i18n="s_immersion">Immersion heater (≈95 %)</option>
+              </select></div>
             <div class="readout big"><span class="label" data-i18n="t_q_label">q (heat exchanged)</span><span class="value" id="t-q">—</span></div>
             <div class="readout"><span class="label" data-i18n="t_dhm_label">ΔH molar</span><span class="value" id="t-dHm">—</span></div>
             <div class="readout"><span class="label" data-i18n="t_class_label">Classification</span><span class="value" id="t-class">—</span></div>
-            <div class="hr"></div>
-            <button id="t-ai-explain" class="stressbtn" style="background:var(--amber-dim);" data-i18n="ai_explain_btn_thermo">🤖 Explain this result with AI</button>
-            <div id="t-ai-summary" style="display:none;font-size:12.5px;margin-top:8px;padding:10px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:8px;"></div>
             <div class="hr"></div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               <button id="t-export-csv" class="stressbtn" style="flex:1;" data-i18n="t_export_diagram">⬇ Export results (CSV)</button>
@@ -320,6 +336,7 @@
               <div class="hr"></div>
               <div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:6px;" data-i18n="t_breakdown_title">Per-substance breakdown</div>
               <table id="t-results-table" style="width:100%;font-size:11px;border-collapse:collapse;"></table>
+              <div id="t-report" class="lab-report"></div>
             </div>
           </div>
         </div>
@@ -330,12 +347,18 @@
         <div class="grid2">
           <div class="card">
             <div class="card-title" data-i18n="c_reactants">Reactants</div>
+            <div class="note" style="margin-bottom:10px;align-items:flex-start;">ⓘ <span data-i18n="c_q_help">Solids are weighed (g).</span></div>
             <div id="c-reactants-list"></div>
             <button id="c-add-reactant" class="stressbtn" data-i18n="c_add_reactant">+ Add reactant</button>
             <div class="hr"></div>
             <div class="card-title" data-i18n="c_conditions">Conditions</div>
             <div class="field"><div class="row"><label data-i18n="c_temperature">Temperature</label><span class="val" id="c-temp-val">25 °C</span></div><input id="c-temp" type="range" min="-20" max="2000" step="5" value="25"></div>
             <div class="field"><div class="row"><label data-i18n="c_sim_time">Simulation time</label><span class="val" id="c-time-val">60 s</span></div><input id="c-time" type="range" min="0" max="86400" step="10" value="60"></div>
+            <div class="field"><div class="row"><label data-i18n="c_purity">Reagent purity (assay)</label><span class="val"><input id="c-purity" type="number" min="50" max="100" step="0.1" value="99" style="width:64px;"> %</span></div></div>
+            <div class="field"><div class="row"><label data-i18n="c_loss">Work-up / isolation loss</label><span class="val"><input id="c-loss" type="number" min="0" max="90" step="1" value="10" style="width:64px;"> %</span></div></div>
+            <div class="field"><div class="row"><label data-i18n="c_form">Solid reactant form</label></div>
+              <select id="c-form" class="reagent-select"><option value="powder" data-i18n="c_form_powder">Fine powder</option><option value="granules" data-i18n="c_form_granules">Granules / turnings</option><option value="lumps" data-i18n="c_form_lumps">Lumps / ribbon</option></select></div>
+            <label style="display:flex;gap:8px;align-items:center;font-size:12px;margin-bottom:12px;"><input id="c-stir" type="checkbox" checked><span data-i18n="c_stir">Magnetic stirring</span></label>
             <div class="card-title" data-i18n="c_predicted_products_title">Predicted products</div>
             <div id="c-predict-note" style="font-size:11px;color:var(--ink-soft);margin-bottom:6px;"></div>
             <div style="display:flex;gap:6px;margin-bottom:8px;">
@@ -380,13 +403,10 @@
               <div class="card-title" data-i18n="c_results">Stoichiometry results</div>
               <div id="c-mass-balance" style="font-size:11px;color:var(--ink-soft);margin-bottom:8px;"></div>
               <table id="c-results-table" style="width:100%;font-size:11px;border-collapse:collapse;"></table>
+              <div id="c-report" class="lab-report"></div>
               <div id="c-view3d-section" style="display:none;margin-top:12px;padding-top:10px;border-top:1px dashed var(--paper-edge);">
                 <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:6px;" data-i18n="c_view3d_label">🧊 View in 3D</div>
                 <div id="c-view3d-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
-              </div>
-              <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--paper-edge);">
-                <button id="c-ai-explain" class="stressbtn" style="background:var(--amber-dim);" data-i18n="ai_explain_btn_reaction">🤖 Explain this reaction with AI</button>
-                <div id="c-ai-summary" style="display:none;font-size:12.5px;margin-top:8px;padding:10px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:8px;"></div>
               </div>
             </div>
             <div class="card">
@@ -403,6 +423,94 @@
         </div>
       </section>
 
+      <!-- Conjugation & Bio-conjugation -->
+      <section id="panel-conjugation" class="panel">
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title" data-i18n="cj_setup">Conjugation setup</div>
+            <div class="field">
+              <div class="row"><label data-i18n="cj_mode">Conjugation type</label></div>
+              <select id="cj-mode" class="reagent-select">
+                <option value="chem" data-i18n="cj_mode_chem">Chemical conjugation (small molecules)</option>
+                <option value="bio" data-i18n="cj_mode_bio">Bio-conjugation (proteins, peptides, oligos)</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="row"><label data-i18n="cj_chemistry">Coupling chemistry</label></div>
+              <select id="cj-type" class="reagent-select"></select>
+              <div id="cj-type-info" style="font-size:11px;color:var(--ink-soft);margin-top:6px;line-height:1.45;"></div>
+            </div>
+            <div class="field">
+              <div class="row"><label id="cj-b-label">Target / substrate</label></div>
+              <select id="cj-b" class="reagent-select"></select>
+            </div>
+            <div class="field">
+              <div class="row"><label id="cj-a-label">Coupling partner / label</label></div>
+              <select id="cj-a" class="reagent-select"></select>
+            </div>
+            <div class="hr"></div>
+            <div class="card-title" data-i18n="cj_amounts">Amounts</div>
+            <div class="field"><div class="row"><label id="cj-bconc-label">Target concentration</label><span class="val" id="cj-bconc-val"></span></div><input id="cj-bconc" type="range" min="0" max="100" step="1" value="50"></div>
+            <div class="field"><div class="row"><label data-i18n="cj_equiv">Partner equivalents (molar excess)</label><span class="val" id="cj-equiv-val"></span></div><input id="cj-equiv" type="range" min="0.1" max="50" step="0.1" value="1.2"></div>
+            <div class="field"><div class="row"><label data-i18n="cj_volume">Reaction volume</label><span class="val" id="cj-vol-val"></span></div><input id="cj-vol" type="range" min="0.1" max="100" step="0.1" value="1"></div>
+            <div class="field" id="cj-purity-wrap"><div class="row"><label data-i18n="cj_purity">Reagent activity / purity</label><span class="val"><input id="cj-purity" type="number" min="30" max="100" step="1" value="92" style="width:56px;"> %</span></div></div>
+            <div class="hr"></div>
+            <div class="card-title" data-i18n="c_conditions">Conditions</div>
+            <div class="field"><div class="row"><label>pH</label><span class="val" id="cj-ph-val"></span></div><input id="cj-ph" type="range" min="2" max="12" step="0.1" value="7.4"></div>
+            <div class="field"><div class="row"><label data-i18n="c_temperature">Temperature</label><span class="val" id="cj-temp-val"></span></div><input id="cj-temp" type="range" min="-20" max="150" step="1" value="25"></div>
+            <div class="field"><div class="row"><label data-i18n="c_sim_time">Simulation time</label><span class="val" id="cj-time-val"></span></div><input id="cj-time" type="range" min="0" max="100" step="1" value="50"></div>
+            <label id="cj-cat-wrap" style="display:flex;gap:8px;align-items:center;font-size:12px;margin-bottom:12px;"><input id="cj-cat" type="checkbox" checked><span id="cj-cat-label"></span></label>
+            <div class="hr"></div>
+            <details id="cj-custom-box">
+              <summary style="cursor:pointer;font-size:12px;font-weight:600;" data-i18n="cj_add_custom">➕ Add a reactant to the conjugation bank</summary>
+              <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+                <input id="cj-new-name" class="formula-input" placeholder="Name, e.g. Cy5-NHS ester" data-i18n-placeholder="cj_new_name_ph">
+                <input id="cj-new-formula" class="formula-input" placeholder="Formula (optional), e.g. C7H6O2" data-i18n-placeholder="cj_new_formula_ph">
+                <input id="cj-new-mw" class="formula-input" type="number" min="1" step="any" placeholder="Molar mass g/mol (if no formula)" data-i18n-placeholder="cj_new_mw_ph">
+                <select id="cj-new-kind" class="reagent-select">
+                  <option value="small" data-i18n="cj_kind_small">Small molecule / linker / label</option>
+                  <option value="bio" data-i18n="cj_kind_bio">Biomolecule (protein, peptide, oligo)</option>
+                </select>
+                <div style="font-size:11px;color:var(--ink-soft);" data-i18n="cj_groups_label">Reactive groups (and number of accessible sites for biomolecules):</div>
+                <div id="cj-new-groups" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:11.5px;"></div>
+                <button id="cj-new-add" class="stressbtn" data-i18n="r_add_to_bank">➕ Add to bank</button>
+                <div id="cj-new-msg" style="font-size:11px;display:none;"></div>
+              </div>
+            </details>
+          </div>
+          <div>
+            <div class="screen">
+              <div class="corners"><span></span><span></span><span></span><span></span></div>
+              <div class="surface-label" id="cj-scene-label">reaction vessel</div>
+              <div style="display:flex;justify-content:center;margin-top:18px;"><svg id="cj-scene" viewBox="0 0 420 200" style="width:100%;max-width:520px;height:auto;"></svg></div>
+            </div>
+            <div class="card" style="margin-top:12px;">
+              <div class="card-title" data-i18n="cj_equation">Conjugation equation</div>
+              <div id="cj-equation" style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.6;word-break:break-word;">—</div>
+              <div id="cj-linkage" style="font-size:11.5px;color:var(--ink-soft);margin-top:6px;"></div>
+            </div>
+            <div class="card">
+              <div class="card-title" data-i18n="cj_results">Results</div>
+              <div id="cj-results" style="font-size:12px;color:var(--ink-soft);"><span data-i18n="cj_results_empty">Choose the partners and press ▶ Run Conjugation.</span></div>
+              <div id="cj-warnings" style="margin-top:8px;"></div>
+              <div id="cj-report" class="lab-report"></div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+                <button id="cj-log" class="stressbtn" style="width:auto;" data-i18n="cj_log">📌 Log experiment</button>
+                <button id="cj-export" class="stressbtn" style="width:auto;" data-i18n="cj_export">⬇ Export CSV</button>
+                <button id="cj-add-product" class="stressbtn" style="width:auto;display:none;" data-i18n="cj_add_product">➕ Add product to bank</button>
+              </div>
+            </div>
+            <div class="screen" style="margin-top:12px;">
+              <div class="corners"><span></span><span></span><span></span><span></span></div>
+              <div class="surface-label" data-i18n="cj_kinetics">kinetics · fraction vs. time</div>
+              <div id="cj-legend" style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;margin:22px 0 6px;"></div>
+              <div class="chart-body"><canvas id="cj-chart" height="220"></canvas></div>
+            </div>
+            <div class="note" style="margin-top:8px;">ⓘ <span data-i18n="cj_disclaimer">Rate constants, pH profiles and hydrolysis half-lives are literature-typical values for each chemistry, used in a second-order kinetic model. They are teaching estimates, not measurements for your exact molecules.</span></div>
+          </div>
+        </div>
+      </section>
+
       <!-- Reagents -->
       <section id="panel-reagents" class="panel">
         <div class="card">
@@ -414,7 +522,10 @@
           <div class="card-title" data-i18n="r_formula_builder">Formula builder</div>
           <input id="formula-input" class="formula-input" placeholder="e.g. NaOH, H2SO4, Ca(OH)2" data-i18n-placeholder="r_formula_placeholder">
           <!-- FIXED: Added missing formula-clear button that app.js expects -->
-          <button id="formula-clear" class="stressbtn" style="margin-top:6px;" data-i18n="r_clear">Clear</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+            <button id="suggest-compounds" class="stressbtn" data-i18n="r_suggest_btn">✨ Suggest compounds (AI)</button>
+            <button id="formula-clear" class="stressbtn" data-i18n="r_clear">Clear</button>
+          </div>
           <div id="formula-breakdown" style="margin-top:8px;"></div>
           <div id="formula-suggestions" style="display:none;margin-top:10px;"></div>
           <div class="readout big" style="margin-top:10px;"><span class="label" data-i18n="r_molar_mass">Molar mass</span><span class="value" id="formula-mm">—</span></div>
@@ -543,7 +654,16 @@
 </div>
 
 <div id="toast-host" class="toast-host"></div>
-
-<script src="static/js/app.js"></script>
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="js/reagentDatabase.js"></script>
+<script src="js/periodicTable.js"></script>
+<script src="js/reactionEngine.js"></script>
+<script src="js/stoichiometry.js"></script>
+<script src="js/notebook.js"></script>
+<script src="js/export.js"></script>
+<script src="js/aiAssistant.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
